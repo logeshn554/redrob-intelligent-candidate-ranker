@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+artifacts/
+*.npy
+*.log
+.DS_Store
+# Large data files — download separately
+data/candidates.jsonl
+data/candidates.jsonl.gz
+# Scripts directory is dev-only
+scripts/

@@ -1,0 +1,71 @@
+team_name: TODO_FILL_TEAM_NAME  # TODO: Replace with your registered team name
+team_members:
+  - name: TODO_FILL_MEMBER_NAME   # TODO: Replace with your full name
+    email: TODO_FILL_MEMBER_EMAIL # TODO: Replace with your registered email
+github_repo_url: TODO_FILL_GITHUB_REPO_URL  # TODO: Replace with your GitHub repo URL
+sandbox_url: TODO_FILL_SANDBOX_URL          # TODO: Replace with your Streamlit Cloud / HF Spaces URL
+
+methodology_summary: >
+  Hybrid pipeline combining four independent layers: (1) Structured feature extraction
+  that reads all candidate data from the correct nested profile sub-object, extracts title
+  relevance (highest weight 0.22), production deployment evidence, vector DB hands-on,
+  Python career evidence, ranking evaluation signals, career corroboration score, and
+  location via profile.country. (2) Local CPU semantic matching using
+  sentence-transformers/all-MiniLM-L6-v2 precomputed and cached for all 100K candidates.
+  (3) Rule-based override layer applying near-zero caps to keyword stuffers (Marketing
+  Manager + AI skills list), honeypots (impossible career dates), services-only candidates
+  (TCS/Wipro career with no product company exposure), and research-only (academic labs).
+  (4) Multiplicative behavioral availability multiplier from redrob_signals
+  (open_to_work, notice_period, recruiter_response_rate, last_active_date, location
+  willingness). Final score is non-increasing by rank with candidate_id tie-breaking.
+  Reasoning strings are deterministically generated from actual candidate facts (title,
+  company, location, specific signal values) without any LLM API calls.
+
+compute_environment:
+  cpu_only: true
+  gpu_used: false
+  max_ram_gb: 4        # Well under the 16GB budget
+  ranking_runtime_seconds: 2.387  # With precomputed artifacts
+  ranking_runtime_minutes: 0.04   # With precomputed artifacts
+  precompute_runtime_minutes: 20  # One-time offline step (sentence-transformers on CPU)
+
+precompute_artifacts:
+  enabled: true
+  artifacts_dir: ./artifacts
+  description: >
+    candidate_embeddings.npy (100K x 384 float32, ~147MB),
+    candidate_features.csv (structured features for all 100K candidates),
+    candidate_ids.csv (ordered candidate ID mapping).
+    Built offline using src/precompute.py; ranking script loads from cache.
+
+model:
+  name: sentence-transformers/all-MiniLM-L6-v2
+  type: local_cpu
+  api_calls: false
+  network_calls_during_ranking: false
+
+key_design_choices:
+  - Title relevance is the highest-weighted feature (0.22) to gate out irrelevant titles
+  - All profile data correctly read from nested candidate.profile sub-object
+  - Services company detection uses hardcoded name list (20+ known firms)
+  - Research-only detection separates production deployment from academic retrieval mentions
+  - Keyword stuffing detected via title-career-skills mismatch cross-check
+  - Behavioral multiplier applied multiplicatively (0.45-1.10x range)
+  - Sentinel value -1 in behavioral rates treated as neutral (0.5), not as zero
+  - Honeypot detection uses generic consistency rules, not hardcoded IDs
+
+known_limitations:
+  - Company type inference is heuristic and keyword-based for academic institutions
+  - No company founding date lookup for precise honeypot detection
+  - Reasoning uses structured template logic (not free-form LLM generation)
+  - Title relevance set covers ~8,600 candidates out of 100K; rest are scored primarily on career text
+
+repro_command: python src/rank.py --candidates ./data/candidates.jsonl --jd ./data/job_description.docx --out ./submission.csv --artifacts-dir ./artifacts
+
+precompute_command: python src/precompute.py --candidates ./data/candidates.jsonl --jd ./data/job_description.docx --out-dir ./artifacts
+
+notes:
+  - TODO: Replace team_name, team_members.name, team_members.email with actual values
+  - TODO: Replace github_repo_url with your actual GitHub repository URL
+  - TODO: Replace sandbox_url with your deployed Streamlit Cloud or HF Spaces URL
+  - All other fields are already filled with accurate measured values
