@@ -108,13 +108,16 @@ def rank_candidates(
         )
 
     embedder = LocalEmbedder(EmbeddingConfig(model_name=model_name, batch_size=batch_size))
-    # Use a rich JD query that emphasises the substance over keywords
+    # Rich, role-specific JD query for semantic matching
     jd_query = (
-        "Senior AI engineer with hands-on production deployment of embedding-based retrieval systems, "
-        "vector databases (Pinecone, Qdrant, Faiss, Weaviate), strong Python engineering in a product company, "
-        "and practical experience evaluating ranking quality (NDCG, MRR, MAP, A/B testing). "
-        "5-9 years experience. Based in Pune or Noida, hybrid work. "
-        + jd_text[:500]
+        "Senior AI / ML engineer who has shipped production retrieval and embedding systems at scale. "
+        "Hands-on experience building and serving RAG pipelines, dense retrieval, semantic search, "
+        "and reranking. Deep familiarity with vector databases such as Pinecone, Qdrant, Weaviate, Faiss, "
+        "Milvus, or Elasticsearch. Strong Python skills with FastAPI, PyTorch, Hugging Face Transformers. "
+        "Has evaluated ranking quality using NDCG, MRR, MAP, A/B tests. "
+        "5 to 9 years of industry experience, currently at a product company (not services outsourcing). "
+        "Based in India, preferably Bangalore, Pune, or Noida. Open to hybrid work. "
+        + jd_text[:800]
     )
     jd_vec = embedder.encode([jd_query])[0]
     semantic = cosine_similarity(jd_vec, candidate_embs)
@@ -133,6 +136,21 @@ def rank_candidates(
         ["score", "candidate_id"], ascending=[False, True], kind="mergesort"
     ).reset_index(drop=True)
     submission["rank"] = np.arange(1, len(submission) + 1)
+
+    # ── Output score normalization ──────────────────────────────────────────
+    # Stretch top-K scores to [SCORE_MIN, SCORE_MAX] so rank 1 ≈ 0.97 and
+    # rank 100 ≈ 0.10, making the distribution intuitive without changing order.
+    SCORE_MAX = 0.97
+    SCORE_MIN = 0.10
+    raw = submission["score"].to_numpy(dtype=np.float64)
+    lo, hi = raw.min(), raw.max()
+    if abs(hi - lo) > 1e-9:
+        # Map: highest raw score → SCORE_MAX, lowest → SCORE_MIN
+        normalized = SCORE_MIN + (SCORE_MAX - SCORE_MIN) * (raw - lo) / (hi - lo)
+        # raw is sorted descending (rank 1 = highest), so normalized is already descending
+        submission["score"] = normalized
+    # Re-clip to be safe
+    submission["score"] = submission["score"].clip(SCORE_MIN, SCORE_MAX).round(6)
 
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     submission.to_csv(out_csv, index=False, quoting=csv.QUOTE_MINIMAL, encoding="utf-8")
