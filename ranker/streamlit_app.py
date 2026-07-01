@@ -156,6 +156,18 @@ else:
 
 st.divider()
 
+# ── Processing Mode Selection ─────────────────────────────────────────────────
+st.subheader("Processing Mode")
+exec_mode = st.radio(
+    "Choose execution option:",
+    [
+        "⚡ Use pretrained/precomputed embeddings & features (Instant search/ranking — Recommended)",
+        "⚙️ Compute features and embeddings from scratch (On-the-fly — Takes ~20 min for 100K candidates)"
+    ],
+    index=0
+)
+use_precomputed_ui = "pretrained/precomputed" in exec_mode
+
 # ── Run button ────────────────────────────────────────────────────────────────
 ready = (candidates_bytes is not None and jd_bytes is not None) or (local_candidates_path is not None and local_jd_path is not None)
 run_btn = st.button(
@@ -183,6 +195,19 @@ if run_btn and ready:
                     n_candidates = sum(1 for line in open(local_candidates_path, encoding="utf-8") if line.strip())
                     top_k = min(100, n_candidates)
                     st.info(f"Processing local files... Found **{n_candidates}** candidates → ranking top **{top_k}**")
+                    
+                    local_artifacts = local_candidates_path.parent / "artifacts"
+                    if use_precomputed_ui:
+                        if (local_artifacts / "candidate_embeddings.npy").exists():
+                            artifacts_path = local_artifacts
+                            st.info("⚡ Using precomputed embeddings and features found in local directory.")
+                        elif (ROOT / "artifacts" / "candidate_embeddings.npy").exists():
+                            artifacts_path = ROOT / "artifacts"
+                            st.info("⚡ Using precomputed embeddings and features found in app artifacts.")
+                        else:
+                            st.warning("⚠️ Precomputed artifacts not found in './artifacts'. Falling back to compute on-the-fly.")
+                    else:
+                        st.info("⚙️ Computing features and embeddings from scratch (on-the-fly)...")
                     
                     summary = rank_candidates(
                         candidates_path=local_candidates_path,
@@ -218,6 +243,15 @@ if run_btn and ready:
                     )
                     top_k = min(100, n_candidates)
                     st.info(f"Processing uploaded files... Found **{n_candidates}** candidates → ranking top **{top_k}**")
+
+                    if use_precomputed_ui:
+                        if (ROOT / "artifacts" / "candidate_embeddings.npy").exists():
+                            artifacts_path = ROOT / "artifacts"
+                            st.info("⚡ Using precomputed embeddings and features found in app artifacts.")
+                        else:
+                            st.warning("⚠️ Precomputed artifacts not found in './artifacts'. Falling back to compute on-the-fly.")
+                    else:
+                        st.info("⚙️ Computing features and embeddings from scratch (on-the-fly)...")
 
                     summary = rank_candidates(
                         candidates_path=candidates_path,
