@@ -17,12 +17,14 @@ try:
     from .features import candidate_text_for_embedding, extract_features, features_to_dict, read_candidates
     from .parse_jd import parse_jd_file
     from .reasoning import build_reasoning
+    from .reranker import CandidateReranker
     from .scoring import combine_scores
 except ImportError:
     from embeddings import EmbeddingConfig, LocalEmbedder, cosine_similarity
     from features import candidate_text_for_embedding, extract_features, features_to_dict, read_candidates
     from parse_jd import parse_jd_file
     from reasoning import build_reasoning
+    from reranker import CandidateReranker
     from scoring import combine_scores
 
 
@@ -88,6 +90,9 @@ def rank_candidates(
     model_name: str,
     batch_size: int,
     top_k: int,
+    ce_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    rerank_top: int = 200,
+    ce_alpha: float = 0.45,
 ) -> Dict[str, Any]:
     t0 = time.time()
     _assert_required_inputs(candidates_path, jd_path)
@@ -126,7 +131,47 @@ def rank_candidates(
     effective_top_k = min(top_k, len(candidate_ids))
 
     ranked = combine_scores(candidate_ids, feature_df, semantic)
-    top = ranked.head(effective_top_k).copy()
+
+    # ── Stage 2: Cross-encoder reranking on shortlist ────────────────────────
+    # Take top (rerank_top) candidates from hybrid scoring, then apply a
+    # cross-encoder for LLM-style (query, document) relevance scoring.
+    shortlist_size = max(top_k, rerank_top)
+    shortlist = ranked.head(shortlist_size).copy().reset_index(drop=True)
+
+    try:
+        reranker = CandidateReranker(model_name=ce_model)
+        # Build reranking query — concise, matches cross-encoder training domain
+        ce_query = (
+            "Senior AI engineer with production experience in RAG, dense retrieval, "
+            "vector databases (Pinecone, Qdrant, Faiss), Python, NDCG/MRR evaluation, "
+            "at a product company in India."
+        )
+        # Build candidate text blobs for cross-encoder
+        shortlist_ids = shortlist["candidate_id"].tolist()
+        # Reconstruct candidate texts from feature columns for reranking
+        ce_texts = [
+            f"{row['current_title']} at {row['current_company']}. "
+            f"{row['years_total']:.1f} years experience. Location: {row['location_str']}. "
+            f"Retrieval score: {row['retrieval_prod_score']:.2f}. "
+            f"Vector DB score: {row['vector_db_score']:.2f}. "
+            f"Python score: {row['python_evidence_score']:.2f}."
+            for _, row in shortlist.iterrows()
+        ]
+        hybrid_arr = shortlist["score"].to_numpy(dtype=np.float32)
+        blended = reranker.rerank(ce_query, ce_texts, hybrid_arr, alpha=ce_alpha)
+        shortlist["score"] = blended
+        shortlist["reranked"] = True
+    except Exception as e:
+        # Graceful fallback — if reranker fails, continue with hybrid scores
+        import sys
+        print(f"[reranker] Warning: cross-encoder reranking skipped ({e})", file=sys.stderr)
+        shortlist["reranked"] = False
+
+    # Sort by blended score, apply tie-break, take top_k
+    shortlist = shortlist.sort_values(
+        ["score", "candidate_id"], ascending=[False, True], kind="mergesort"
+    ).reset_index(drop=True)
+    top = shortlist.head(effective_top_k).copy()
 
     top["reasoning"] = top.apply(lambda r: build_reasoning(r.to_dict()), axis=1)
     submission = top[["candidate_id", "rank", "score", "reasoning"]].copy()
@@ -170,6 +215,12 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=100)
     parser.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
     parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument("--ce-model", default="cross-encoder/ms-marco-MiniLM-L-6-v2",
+                        help="Cross-encoder model for reranking shortlist")
+    parser.add_argument("--rerank-top", type=int, default=200,
+                        help="Number of candidates to pass to cross-encoder")
+    parser.add_argument("--ce-alpha", type=float, default=0.45,
+                        help="Weight for cross-encoder score in blended final score")
     args = parser.parse_args()
 
     summary = rank_candidates(
@@ -180,6 +231,9 @@ def main() -> None:
         model_name=args.model,
         batch_size=args.batch_size,
         top_k=args.top_k,
+        ce_model=args.ce_model,
+        rerank_top=args.rerank_top,
+        ce_alpha=args.ce_alpha,
     )
     print(json.dumps(summary, indent=2))
 

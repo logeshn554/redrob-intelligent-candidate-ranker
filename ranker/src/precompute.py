@@ -18,6 +18,12 @@ except ImportError:
     from features import candidate_text_for_embedding, extract_features, features_to_dict, read_candidates
     from parse_jd import parse_jd_file
 
+try:
+    from sentence_transformers import CrossEncoder as _CrossEncoder
+    _CE_AVAILABLE = True
+except ImportError:
+    _CE_AVAILABLE = False
+
 
 def precompute(
     candidates_path: Path,
@@ -25,6 +31,7 @@ def precompute(
     out_dir: Path,
     model_name: str,
     batch_size: int,
+    ce_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
 ) -> Dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -73,12 +80,29 @@ def precompute(
     np.save(out_dir / "candidate_embeddings.npy", emb_matrix)
     print(f"Saved embeddings: shape={emb_matrix.shape} to {out_dir / 'candidate_embeddings.npy'}")
 
+    # ── Warm up cross-encoder (downloads + caches model weights offline) ──────
+    # This ensures rank.py can run with ZERO internet access during scoring.
+    print(f"\nWarming up cross-encoder model: {ce_model}")
+    if _CE_AVAILABLE:
+        try:
+            ce = _CrossEncoder(ce_model, max_length=512)
+            # Run one dummy inference to confirm model is fully cached
+            _ = ce.predict([("test query", "test document")])
+            print(f"  Cross-encoder ready and cached locally.")
+            (out_dir / "ce_model_name.txt").write_text(ce_model, encoding="utf-8")
+        except Exception as e:
+            print(f"  Warning: cross-encoder warm-up failed ({e}). Ranking will fall back to hybrid-only.")
+    else:
+        print("  sentence-transformers not installed — skipping cross-encoder warm-up.")
+        print("  Run: pip install sentence-transformers")
+
     return {
         "candidate_count": len(candidate_ids),
         "honeypot_count": honeypot_count,
         "services_only_count": services_count,
         "title_relevant_count": title_relevant,
         "embedding_dim": int(emb_matrix.shape[1]) if emb_matrix.size else int(embedder.embedding_dim),
+        "ce_model_cached": _CE_AVAILABLE,
         "out_dir": str(out_dir),
     }
 
@@ -90,6 +114,8 @@ def main() -> None:
     parser.add_argument("--out-dir", default=Path("./artifacts"), type=Path)
     parser.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
     parser.add_argument("--batch-size", default=256, type=int)
+    parser.add_argument("--ce-model", default="cross-encoder/ms-marco-MiniLM-L-6-v2",
+                        help="Cross-encoder model to download and cache")
     args = parser.parse_args()
 
     summary = precompute(
@@ -98,6 +124,7 @@ def main() -> None:
         out_dir=args.out_dir,
         model_name=args.model,
         batch_size=args.batch_size,
+        ce_model=args.ce_model,
     )
     print(json.dumps(summary, indent=2))
 
