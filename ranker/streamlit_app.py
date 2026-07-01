@@ -246,57 +246,19 @@ if run_btn and ready:
                 st.subheader("Top Ranked Candidates")
                 st.dataframe(df, use_container_width=True, height=420)
 
-                # Check and display submission_metadata.yaml if it exists
-                yaml_found = False
-                yaml_data = ""
-                # Check current directory or parent directory for metadata file
-                meta_paths = [ROOT / "submission_metadata.yaml", ROOT.parent / "submission_metadata.yaml", Path("./submission_metadata.yaml")]
-                if local_candidates_path:
-                    meta_paths.append(local_candidates_path.parent / "submission_metadata.yaml")
-                    meta_paths.append(local_candidates_path.parent.parent / "submission_metadata.yaml")
-
-                for p in meta_paths:
-                    if p.exists() and p.is_file():
-                        try:
-                            yaml_data = p.read_text(encoding="utf-8")
-                            yaml_found = True
-                            break
-                        except Exception:
-                            pass
-                
                 # File download section
                 st.subheader("📥 Download Submissions")
-                col_dl1, col_dl2 = st.columns(2)
-                
-                with col_dl1:
-                    st.download_button(
-                        label="⬇️ Download Ranked Candidates (CSV)",
-                        data=out_path.read_bytes(),
-                        file_name="submission.csv",
-                        mime="text/csv",
-                        type="primary",
-                        use_container_width=True,
-                    )
-                
-                with col_dl2:
-                    if yaml_found:
-                        st.download_button(
-                            label="⬇️ Download Submission Metadata (YAML)",
-                            data=yaml_data.encode("utf-8"),
-                            file_name="submission_metadata.yaml",
-                            mime="text/yaml",
-                            type="secondary",
-                            use_container_width=True,
-                        )
-                    else:
-                        st.warning("⚠️ submission_metadata.yaml not found to download.")
+                st.download_button(
+                    label="⬇️ Download Ranked Candidates (CSV)",
+                    data=out_path.read_bytes(),
+                    file_name="submission.csv",
+                    mime="text/csv",
+                    type="primary",
+                    use_container_width=True,
+                )
 
                 st.subheader("Pipeline Summary")
                 st.json(summary)
-
-                if yaml_found:
-                    with st.expander("📄 View submission_metadata.yaml"):
-                        st.code(yaml_data, language="yaml")
 
         except Exception as e:
             st.error(f"Pipeline error: {e}")
