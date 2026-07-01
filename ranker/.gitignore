@@ -1,14 +1,83 @@
+# ============================================================
+# Python
+# ============================================================
 __pycache__/
-*.pyc
-.pytest_cache/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ============================================================
+# Virtual environments
+# ============================================================
 .venv/
 venv/
-artifacts/
-*.npy
-*.log
-.DS_Store
-# Large data files — download separately
+env/
+ENV/
+.env
+
+# ============================================================
+# Testing & coverage
+# ============================================================
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.lcov
+
+# ============================================================
+# Large data files — download / generate separately
+# ============================================================
 data/candidates.jsonl
 data/candidates.jsonl.gz
-# Scripts directory is dev-only
+data/*.docx
+
+# ============================================================
+# Precomputed artifacts — large binary files
+# (regenerated via precompute.py)
+# ============================================================
+artifacts/candidate_embeddings.npy
+artifacts/*.npy
+
+# ============================================================
+# Submission outputs — don't track generated CSVs/XLSXs
+# (keep only the final submission.csv that you explicitly commit)
+# ============================================================
+ranked_candidates.xlsx
+export_xlsx.py
+generate_pdf.py
+audit_csv.py
+
+# ============================================================
+# IDE / editor
+# ============================================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# ============================================================
+# OS
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# Logs & temp files
+# ============================================================
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# ============================================================
+# Dev-only scripts
+# ============================================================
 scripts/
