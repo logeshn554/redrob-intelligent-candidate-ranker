@@ -9,29 +9,20 @@ team_name: "Nexus Minds"
 
 primary_contact:
   name: "Logesh N"
-  email: "logesh.al23@bitsathy.ac.in"
-  phone: "+91-XXXXXXXXXX"        # ⚠ REPLACE before portal upload
+  email: "logeshn554@gmail.com"
+  phone: "+91-XXXXXXXXXX"        # Replace with your actual phone number
 
 team_members:
   - name: "Logesh N"
-    email: "logesh.al23@bitsathy.ac.in"
+    email: "logeshn554@gmail.com"
     role: "Team Lead"
-  - name: "Prabhu Shankar"
-    email: "prabhushankar.00001@gmail.com"
-    role: "Member"
-  - name: "SELVALOGU N"
-    email: "selvalogu.it23@bitsathy.ac.in"
-    role: "Member"
-  - name: "THARUN N E"
-    email: "tharunelango2006@gmail.com"
-    role: "Member"
 
 # ============================================================================
 # Code and reproducibility
 # ============================================================================
 github_repo: "https://github.com/logeshn554/redrob-intelligent-candidate-ranker"
 
-sandbox_link: "https://huggingface.co/spaces/kickbotsuki/redrob-ranker (HuggingFace) / https://colab.research.google.com/github/logeshn554/redrob-intelligent-candidate-ranker/blob/main/redrob_ranker_sandbox.ipynb (Google Colab)"
+sandbox_link: "https://redrob-candidate-ranker.streamlit.app"  # Or your Streamlit Cloud link
 
 reproduce_command: "python src/rank.py --candidates ./data/candidates.jsonl --jd ./data/job_description.docx --out ./submission.csv --artifacts-dir ./artifacts"
 
