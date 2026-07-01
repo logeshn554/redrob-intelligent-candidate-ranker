@@ -16,13 +16,22 @@ team_members:
   - name: "Logesh N"
     email: "logeshn554@gmail.com"
     role: "Team Lead"
+  - name: "Prabhu Shankar"
+    email: "prabhushankar.00001@gmail.com"
+    role: "Member"
+  - name: "Selvalogu N"
+    email: "selvalogu.it23@bitsathy.ac.in"
+    role: "Member"
+  - name: "Tharun NE"
+    email: "tharunelango2006@gmail.com"
+    role: "Member"
 
 # ============================================================================
 # Code and reproducibility
 # ============================================================================
 github_repo: "https://github.com/logeshn554/redrob-intelligent-candidate-ranker"
 
-sandbox_link: "https://redrob-candidate-ranker.streamlit.app"  # Or your Streamlit Cloud link
+sandbox_link: "https://huggingface.co/spaces/kickbotsuki/redrob-ranker"
 
 reproduce_command: "python src/rank.py --candidates ./data/candidates.jsonl --jd ./data/job_description.docx --out ./submission.csv --artifacts-dir ./artifacts"
 
