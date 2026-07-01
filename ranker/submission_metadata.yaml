@@ -9,13 +9,22 @@ team_name: "Nexus Minds"
 
 primary_contact:
   name: "Logesh N"
-  email: "logeshn554@gmail.com"
-  phone: "+91-XXXXXXXXXX"        # Replace with your actual phone number
+  email: "logesh.al23@bitsathy.ac.in"
+  phone: "+91-XXXXXXXXXX"        # ⚠ REPLACE before portal upload
 
 team_members:
   - name: "Logesh N"
-    email: "logeshn554@gmail.com"
+    email: "logesh.al23@bitsathy.ac.in"
     role: "Team Lead"
+  - name: "Prabhu Shankar"
+    email: "prabhushankar.00001@gmail.com"
+    role: "Member"
+  - name: "SELVALOGU N"
+    email: "selvalogu.it23@bitsathy.ac.in"
+    role: "Member"
+  - name: "THARUN N E"
+    email: "tharunelango2006@gmail.com"
+    role: "Member"
 
 # ============================================================================
 # Code and reproducibility
