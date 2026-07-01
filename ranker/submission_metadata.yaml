@@ -31,7 +31,7 @@ team_members:
 # ============================================================================
 github_repo: "https://github.com/logeshn554/redrob-intelligent-candidate-ranker"
 
-sandbox_link: "https://huggingface.co/spaces/kickbotsuki/redrob-ranker"
+sandbox_link: "https://huggingface.co/spaces/kickbotsuki/redrob-ranker (HuggingFace) / https://colab.research.google.com/github/logeshn554/redrob-intelligent-candidate-ranker/blob/main/redrob_ranker_sandbox.ipynb (Google Colab)"
 
 reproduce_command: "python src/rank.py --candidates ./data/candidates.jsonl --jd ./data/job_description.docx --out ./submission.csv --artifacts-dir ./artifacts"
 
