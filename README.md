@@ -243,16 +243,6 @@ Upload a JSONL file (≤ 100 candidates) and a JD DOCX. The same `src/scoring.py
 
 ---
 
-## 👥 Team
-
-**Team Nexus Minds**
-
-| Name | Role | Contact |
-|------|------|---------|
-| Logesh N | Team Lead | logeshn554@gmail.com |
-| Prabhu Shankar | Member | prabhushankar.00001@gmail.com |
-| Selvalogu N | Member | selvalogu.it23@bitsathy.ac.in |
-| Tharun NE | Member | tharunelango2006@gmail.com |
 
 📦 **GitHub**: [logeshn554/redrob-intelligent-candidate-ranker](https://github.com/logeshn554/redrob-intelligent-candidate-ranker)
 
